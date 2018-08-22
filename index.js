@@ -211,8 +211,10 @@ function defaultInterface () {
 }
 
 function allInterfaces () {
-  return INTERFACES
-  /*
+  if (typeof chrome !== 'undefined') {
+    return INTERFACES
+  }
+  
   var networks = os.networkInterfaces()
   var names = Object.keys(networks)
   var res = []
@@ -230,5 +232,4 @@ function allInterfaces () {
   }
 
   return res
-*/
 }

@@ -6,6 +6,9 @@
   "scripts": {
     "test": "standard && tape test.js"
   },
+  "browser": {
+    "dgram": "chrome-dgram"
+  },
   "bin": "cli.js",
   "dependencies": {
     "dns-packet": "^4.0.0",
