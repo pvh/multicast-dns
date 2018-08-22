@@ -1,3 +1,5 @@
+/* global chrome */
+
 var packet = require('dns-packet')
 var dgram = require('dgram')
 var thunky = require('thunky')
@@ -6,14 +8,42 @@ var os = require('os')
 
 var noop = function () {}
 
+var INTERFACES = []
+
+if (typeof chrome !== 'undefined') {
+  //  INTERFACES.push("127.0.0.1");
+  chrome.system.network.getNetworkInterfaces(ifaces => {
+    for (let i = 0; i < ifaces.length; i++) {
+      if (ifaces[i].prefixLength === 24) {
+        INTERFACES.push(ifaces[i].address)
+      }
+    }
+  })
+} else {
+  var networks = os.networkInterfaces()
+  var names = Object.keys(networks)
+
+  for (var i = 0; i < names.length; i++) {
+    var net = networks[names[i]]
+    for (var j = 0; j < net.length; j++) {
+      var iface = net[j]
+      if (iface.family === 'IPv4') {
+        INTERFACES.push(iface.address)
+        // could only addMembership once per interface (https://nodejs.org/api/dgram.html#dgram_socket_addmembership_multicastaddress_multicastinterface)
+        break
+      }
+    }
+  }
+}
+
 module.exports = function (opts) {
   if (!opts) opts = {}
 
   var that = new events.EventEmitter()
-  var port = typeof opts.port === 'number' ? opts.port : 5353
+  var port = typeof opts.port === 'number' ? opts.port : undefined
   var type = opts.type || 'udp4'
   var ip = opts.ip || opts.host || (type === 'udp4' ? '224.0.0.251' : null)
-  var me = {address: ip, port: port}
+  var me = { address: ip, port: port }
   var memberships = {}
   var destroyed = false
   var interval = null
@@ -22,17 +52,20 @@ module.exports = function (opts) {
     throw new Error('For IPv6 multicast you must specify `ip` and `interface`')
   }
 
-  var socket = opts.socket || dgram.createSocket({
-    type: type,
-    reuseAddr: opts.reuseAddr !== false,
-    toString: function () {
-      return type
-    }
-  })
+  var socket =
+    opts.socket ||
+    dgram.createSocket({
+      type: type,
+      reuseAddr: opts.reuseAddr !== false,
+      toString: function () {
+        return type
+      }
+    })
 
   socket.on('error', function (err) {
-    if (err.code === 'EACCES' || err.code === 'EADDRINUSE') that.emit('error', err)
-    else that.emit('warning', err)
+    if (err.code === 'EACCES' || err.code === 'EADDRINUSE') {
+      that.emit('error', err)
+    } else that.emit('warning', err)
   })
 
   socket.on('message', function (message, rinfo) {
@@ -54,13 +87,20 @@ module.exports = function (opts) {
     if (opts.multicast !== false) {
       that.update()
       interval = setInterval(that.update, 5000)
-      socket.setMulticastTTL(opts.ttl || 255)
-      socket.setMulticastLoopback(opts.loopback !== false)
+      if (typeof chrome === 'undefined') {
+        socket.setMulticastTTL(opts.ttl || 255)
+        socket.setMulticastLoopback(opts.loopback !== false)
+      }
     }
   })
 
+  if (typeof chrome !== 'undefined') {
+    socket.setMulticastTTL(opts.ttl || 255)
+    socket.setMulticastLoopback(opts.loopback !== false)
+  }
+
   var bind = thunky(function (cb) {
-    if (!port) return cb(null)
+    //    if (!port) return cb(null)
     socket.once('error', cb)
     socket.bind(port, opts.interface, function () {
       socket.removeListener('error', cb)
@@ -84,13 +124,19 @@ module.exports = function (opts) {
       if (destroyed) return cb()
       if (err) return cb(err)
       var message = packet.encode(value)
-      socket.send(message, 0, message.length, rinfo.port, rinfo.address || rinfo.host, cb)
+      socket.send(
+        message,
+        0,
+        message.length,
+        rinfo.port,
+        rinfo.address || rinfo.host,
+        cb
+      )
     }
   }
 
-  that.response =
-  that.respond = function (res, rinfo, cb) {
-    if (Array.isArray(res)) res = {answers: res}
+  that.response = that.respond = function (res, rinfo, cb) {
+    if (Array.isArray(res)) res = { answers: res }
 
     res.type = 'response'
     res.flags = (res.flags || 0) | packet.AUTHORITATIVE_ANSWER
@@ -99,12 +145,14 @@ module.exports = function (opts) {
 
   that.query = function (q, type, rinfo, cb) {
     if (typeof type === 'function') return that.query(q, null, null, type)
-    if (typeof type === 'object' && type && type.port) return that.query(q, null, type, rinfo)
+    if (typeof type === 'object' && type && type.port) {
+      return that.query(q, null, type, rinfo)
+    }
     if (typeof rinfo === 'function') return that.query(q, type, null, rinfo)
     if (!cb) cb = noop
 
-    if (typeof q === 'string') q = [{name: q, type: type || 'ANY'}]
-    if (Array.isArray(q)) q = {type: 'query', questions: q}
+    if (typeof q === 'string') q = [{ name: q, type: type || 'ANY' }]
+    if (Array.isArray(q)) q = { type: 'query', questions: q }
 
     q.type = 'query'
     that.send(q, rinfo, cb)
@@ -145,6 +193,9 @@ module.exports = function (opts) {
 }
 
 function defaultInterface () {
+  if (typeof chrome === 'undefined') {
+    return '0.0.0.0'
+  }
   var networks = os.networkInterfaces()
   var names = Object.keys(networks)
 
@@ -160,6 +211,8 @@ function defaultInterface () {
 }
 
 function allInterfaces () {
+  return INTERFACES
+  /*
   var networks = os.networkInterfaces()
   var names = Object.keys(networks)
   var res = []
@@ -177,4 +230,5 @@ function allInterfaces () {
   }
 
   return res
+*/
 }
