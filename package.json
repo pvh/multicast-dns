@@ -11,6 +11,7 @@
   },
   "bin": "cli.js",
   "dependencies": {
+    "chrome-dgram": "^3.0.1",
     "dns-packet": "^4.0.0",
     "thunky": "^1.0.2"
   },

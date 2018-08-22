@@ -40,7 +40,7 @@ module.exports = function (opts) {
   if (!opts) opts = {}
 
   var that = new events.EventEmitter()
-  var port = typeof opts.port === 'number' ? opts.port : undefined
+  var port = typeof opts.port === 'number' ? opts.port : 3535
   var type = opts.type || 'udp4'
   var ip = opts.ip || opts.host || (type === 'udp4' ? '224.0.0.251' : null)
   var me = { address: ip, port: port }
@@ -214,7 +214,7 @@ function allInterfaces () {
   if (typeof chrome !== 'undefined') {
     return INTERFACES
   }
-  
+
   var networks = os.networkInterfaces()
   var names = Object.keys(networks)
   var res = []
