@@ -8,7 +8,7 @@ mdns.on('response', function (response) {
   console.log('got a response packet:', response)
 })
 
-mdns.on('query', function (query) {
+mdns.on('query', function (query, rinfo) {
   console.log('got a query packet:', query)
 
   // iterate over all questions to check if we should respond

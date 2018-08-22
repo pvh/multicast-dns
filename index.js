@@ -40,7 +40,7 @@ module.exports = function (opts) {
   if (!opts) opts = {}
 
   var that = new events.EventEmitter()
-  var port = typeof opts.port === 'number' ? opts.port : 3535
+  var port = typeof opts.port === 'number' ? opts.port : 5353
   var type = opts.type || 'udp4'
   var ip = opts.ip || opts.host || (type === 'udp4' ? '224.0.0.251' : null)
   var me = { address: ip, port: port }
@@ -84,6 +84,7 @@ module.exports = function (opts) {
 
   socket.on('listening', function () {
     if (!port) port = me.port = socket.address().port
+    console.log('listening on ', port)
     if (opts.multicast !== false) {
       that.update()
       interval = setInterval(that.update, 5000)
@@ -102,6 +103,9 @@ module.exports = function (opts) {
   var bind = thunky(function (cb) {
     //    if (!port) return cb(null)
     socket.once('error', cb)
+    if (typeof chrome !== 'undefined') {
+      port = 3535
+    }
     socket.bind(port, opts.interface, function () {
       socket.removeListener('error', cb)
       cb(null)
@@ -124,6 +128,7 @@ module.exports = function (opts) {
       if (destroyed) return cb()
       if (err) return cb(err)
       var message = packet.encode(value)
+      console.log("sending on ", rinfo)
       socket.send(
         message,
         0,
