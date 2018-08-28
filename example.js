@@ -13,11 +13,11 @@ mdns.on('query', function (query, rinfo) {
 
   // iterate over all questions to check if we should respond
   query.questions.forEach(function (q) {
-    if (q.type === 'A' && q.name === 'example.local') {
+    if (q.type === 'A' && q.name === 'frombrowser.local') {
       // send an A-record response for example.local
       mdns.respond({
         answers: [{
-          name: 'example.local',
+          name: 'fromnode.local',
           type: 'A',
           ttl: 300,
           data: '192.168.1.5'

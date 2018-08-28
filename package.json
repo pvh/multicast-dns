@@ -4,15 +4,18 @@
   "description": "Low level multicast-dns implementation in pure javascript",
   "main": "index.js",
   "scripts": {
-    "test": "standard && tape test.js"
+    "test": "standard && tape test/*.js"
   },
   "browser": {
     "dgram": "chrome-dgram"
   },
   "bin": "cli.js",
   "dependencies": {
+    "browserify": "^16.2.2",
     "chrome-dgram": "^3.0.1",
     "dns-packet": "^4.0.0",
+    "envify": "^4.1.0",
+    "portfinder": "^1.0.17",
     "thunky": "^1.0.2"
   },
   "devDependencies": {

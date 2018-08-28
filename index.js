@@ -128,7 +128,7 @@ module.exports = function (opts) {
       if (destroyed) return cb()
       if (err) return cb(err)
       var message = packet.encode(value)
-      console.log("sending on ", rinfo)
+      console.log('sending on ', rinfo)
       socket.send(
         message,
         0,
