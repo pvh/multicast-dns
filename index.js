@@ -52,12 +52,6 @@ module.exports = function (opts) {
     throw new Error('For IPv6 multicast you must specify `ip` and `interface`')
   }
 
-  if (typeof chrome !== 'undefined') {
-    chrome.mdns.onServiceList.addListener(function (services) {
-      console.log(services)
-    })
-  }
-
   var socket =
     opts.socket ||
     dgram.createSocket({
@@ -90,7 +84,6 @@ module.exports = function (opts) {
 
   socket.on('listening', function () {
     if (!port) port = me.port = socket.address().port
-    console.log('listening on ', port)
     if (opts.multicast !== false) {
       that.update()
       interval = setInterval(that.update, 5000)
@@ -134,7 +127,6 @@ module.exports = function (opts) {
       if (destroyed) return cb()
       if (err) return cb(err)
       var message = packet.encode(value)
-      console.log('sending on ', rinfo)
       socket.send(
         message,
         0,
