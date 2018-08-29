@@ -52,6 +52,12 @@ module.exports = function (opts) {
     throw new Error('For IPv6 multicast you must specify `ip` and `interface`')
   }
 
+  if (typeof chrome !== 'undefined') {
+    chrome.mdns.onServiceList.addListener(function (services) {
+      console.log(services)
+    })
+  }
+
   var socket =
     opts.socket ||
     dgram.createSocket({

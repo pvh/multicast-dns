@@ -54,6 +54,12 @@ module.exports = function (opts) {
     throw new Error('For IPv6 multicast you must specify `ip` and `interface`')
   }
 
+  if (typeof chrome !== 'undefined') {
+    chrome.mdns.onServiceList.addListener(function (services) {
+      console.log(services)
+    })
+  }
+
   var socket =
     opts.socket ||
     dgram.createSocket({
@@ -5371,6 +5377,19 @@ dns.query({
   questions: [{
     name: 'frombrowser.local',
     type: 'A'
+  }]
+})
+
+dns.on('query', function (query) {
+  console.log('received a query', query)
+})
+
+dns.response({
+  answers: [{
+    name: 'browserresponse.local',
+    type: 'A',
+    ttl: 300,
+    data: '192.168.1.16'
   }]
 })
 

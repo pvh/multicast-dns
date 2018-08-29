@@ -22,7 +22,6 @@ test('UDP works (echo test)', function (t) {
       query.questions.forEach(function (q) {
         console.log(q)
         if (q.type === 'A' && q.name === 'frombrowser.local') {
-          console.log('frombrowsered')
           dns.respond({
             answers: [{
               name: 'fromnode.local',
@@ -30,7 +29,15 @@ test('UDP works (echo test)', function (t) {
               ttl: 300,
               data: '192.168.1.5'
             }]
-          })
+          }, rinfo)
+        }
+      })
+    })
+
+    dns.on('response', function (query, rinfo) {
+      query.answers.forEach(function (a) {
+        if (a.name === 'browserresponse.local') {
+          console.log('VICTORY')
         }
       })
     })
